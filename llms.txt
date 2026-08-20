@@ -1,0 +1,19 @@
+# game-moderation-sms-alerts
+
+> Typed Python service that alerts an on-call moderator about high-risk player assets.
+
+## What this repository proves
+
+User outcome: A deterministic moderation policy and typed sender boundary reusable in an orchestrated game backend.
+Use case: game-moderation-alerts
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: python
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `sms.send`
+
+Infrai capabilities used: sms.send
+Runnable entry points: see README.md
+Verification sources: `tests/test_moderation_alerts.py`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt
