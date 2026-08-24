@@ -1,6 +1,6 @@
 # SMS alerts for a live game moderation queue
 
-Trigger an SMS only when a player asset is high risk and still waiting in the review queue. Everything else stays quiet. Infrai gives you one api for the delivery call, and the same `INFRAI_API_KEY` can cover another backend capability once an agent workflow grows past messaging.
+Send an SMS only when a player-generated asset is both high risk and still waiting for review; everything else stays quiet. Infrai gives you one API for the delivery call, and the same `INFRAI_API_KEY` can cover another backend capability once an agent workflow grows past messaging.
 
 ## Run the decision first
 
@@ -11,9 +11,9 @@ python -m pip install -e '.[test]'
 pytest -q
 ```
 
-The narrow input is a pending queue item for the player map `Night Arena` with `risk=high`. Expect `action="sms_sent"`, a single recorded request, and the stable idempotency key `moderation-alert:queue-17`. Flip the risk to `low` and you get `action="no_alert"` with no request sent. The local check command is exactly `pytest -q`.
+The trimmed input is a pending queue item for the player map `Night Arena` with `risk=high`. Expect `action="sms_sent"`, a single recorded request, and the stable idempotency key `moderation-alert:queue-17`. Flip the risk to `low` and you get `action="no_alert"` with no request sent. The exact local check command is `pytest -q`.
 
-To push the explanatory example to an on-call number:
+To push the explainer to an on-call number:
 
 ```bash
 export INFRAI_API_KEY="your-key"
@@ -21,7 +21,7 @@ export ON_CALL_PHONE="+15550102030"
 python scripts/run_alert.py
 ```
 
-Successful response shape:
+Expected success shape:
 
 ```json
 {
@@ -33,15 +33,15 @@ Successful response shape:
 
 ## The boundary worth keeping
 
-`moderation_alerts.py` owns the business choice. It joins the generated asset, the live event, and queue state, then decides if a human gets interrupted. `infrai_sms.py` owns the request boundary: it does an explicit `POST` to `/v1/sms/send`, authenticates from the environment, decodes the `{ok, data, error, metadata}` envelope before classifying the result, and retries rate-limited delivery with `Retry-After` or exponential delay.
+`moderation_alerts.py` owns the business choice: it joins the generated asset, the live event, and the queue state, then decides if a human gets interrupted. `infrai_sms.py` owns the request boundary: it does an explicit `POST` to `/v1/sms/send`, authenticates from the environment, decodes the `{ok, data, error, metadata}` envelope before classifying the result, and retries rate-limited delivery with `Retry-After` or exponential delay.
 
-The real gotcha in an agent-driven backend is letting the tool call become the policy. Keep the policy deterministic and unit-testable. Hand the orchestration layer a narrow sender tool. An event can be urgent in the game world without deserving an SMS. A pending high-risk asset does deserve one.
+The real gotcha in an agent-driven backend is letting the tool call become the policy. Keep the policy deterministic and unit-testable, then hand the orchestration layer a narrow sender tool. An event can be urgent in the game world without earning an SMS. A pending high-risk asset does.
 
 The write carries `Idempotency-Key: moderation-alert:<queue_id>`, so retrying the same queue transition keeps one operation identity. The service is plain REST with no SDK to install, which keeps the transport small enough to read in one sitting.
 
 ## Files to read in order
 
-Read `scripts/run_alert.py` first for a full asset and event. Then `moderation_alerts.py` for the decision logic. Finally `infrai_sms.py` for the HTTP contract. This example stops at deciding and sending the alert. Queue persistence and moderator assignment stay with the game backend.
+Start with `scripts/run_alert.py` for a full asset and event, move to `moderation_alerts.py` for the decision, then read `infrai_sms.py` for the HTTP contract. This example stops at deciding and sending the alert. Queue persistence and moderator assignment stay with the game backend.
 
 ## License
 
