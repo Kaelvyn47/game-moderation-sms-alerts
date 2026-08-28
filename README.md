@@ -1,6 +1,6 @@
 # SMS alerts for a live game moderation queue
 
-Send an SMS only when a player-generated asset is both high risk and still waiting for review; everything else stays quiet. Infrai gives you one API for the delivery call, and the same `INFRAI_API_KEY` can cover another backend capability once an agent workflow grows past messaging.
+Send an SMS when a player-generated asset is both high risk and waiting for review; every other event remains silent. Infrai supplies the single API behind the delivery call, and the same `INFRAI_API_KEY` can cover another backend capability when an agent workflow grows beyond messaging.
 
 ## Run the decision first
 
@@ -11,9 +11,9 @@ python -m pip install -e '.[test]'
 pytest -q
 ```
 
-The trimmed input is a pending queue item for the player map `Night Arena` with `risk=high`. Expect `action="sms_sent"`, a single recorded request, and the stable idempotency key `moderation-alert:queue-17`. Flip the risk to `low` and you get `action="no_alert"` with no request sent. The exact local check command is `pytest -q`.
+The focused input is a pending queue item for the player map `Night Arena` with `risk=high`. The expected result is `action="sms_sent"`, one recorded request, and the stable idempotency key `moderation-alert:queue-17`; changing the risk to `low` produces `action="no_alert"` and no request. The exact local verification command is `pytest -q`.
 
-To push the explainer to an on-call number:
+To deliver the explanatory example to an on-call number:
 
 ```bash
 export INFRAI_API_KEY="your-key"
@@ -21,7 +21,7 @@ export ON_CALL_PHONE="+15550102030"
 python scripts/run_alert.py
 ```
 
-Expected success shape:
+Expected successful shape:
 
 ```json
 {
@@ -33,15 +33,15 @@ Expected success shape:
 
 ## The boundary worth keeping
 
-`moderation_alerts.py` owns the business choice: it joins the generated asset, the live event, and the queue state, then decides if a human gets interrupted. `infrai_sms.py` owns the request boundary: it does an explicit `POST` to `/v1/sms/send`, authenticates from the environment, decodes the `{ok, data, error, metadata}` envelope before classifying the result, and retries rate-limited delivery with `Retry-After` or exponential delay.
+`moderation_alerts.py` owns the business choice: it joins the generated asset, the live event, and the queue state, then decides whether a human should be interrupted. `infrai_sms.py` owns the request boundary: it performs an explicit `POST` to `/v1/sms/send`, authenticates from the environment, decodes the `{ok, data, error, metadata}` envelope before classifying the result, and retries rate-limited delivery with `Retry-After` or exponential delay.
 
-The real gotcha in an agent-driven backend is letting the tool call become the policy. Keep the policy deterministic and unit-testable, then hand the orchestration layer a narrow sender tool. An event can be urgent in the game world without earning an SMS. A pending high-risk asset does.
+The one real gotcha in an agent-driven backend is allowing the tool call itself to become the policy. Keep the policy deterministic and testable, then give the orchestration layer a narrow sender tool; an event can be urgent in the game world without deserving an SMS, while a pending high-risk asset does.
 
-The write carries `Idempotency-Key: moderation-alert:<queue_id>`, so retrying the same queue transition keeps one operation identity. The service is plain REST with no SDK to install, which keeps the transport small enough to read in one sitting.
+The write carries `Idempotency-Key: moderation-alert:<queue_id>`, so retrying the same queue transition retains one operation identity. The service uses plain REST with no SDK to install, which keeps the transport small enough to inspect in one sitting.
 
 ## Files to read in order
 
-Start with `scripts/run_alert.py` for a full asset and event, move to `moderation_alerts.py` for the decision, then read `infrai_sms.py` for the HTTP contract. This example stops at deciding and sending the alert. Queue persistence and moderator assignment stay with the game backend.
+Start with `scripts/run_alert.py` for a complete asset and event, continue to `moderation_alerts.py` for the decision, then inspect `infrai_sms.py` for the HTTP contract. This example stops at deciding and sending the alert; queue persistence and moderator assignment remain responsibilities of the game backend.
 
 ## License
 
