@@ -58,3 +58,8 @@ The example above is intentionally minimal. A few things to wire up for real use
 **Game Moderation SMS Alerts: SMS (required for real sending)**
 - **Game Moderation SMS Alerts:** Many carriers/regions require a **pre-approved template and signature** before delivery. Register once with `POST /v1/sms/template/create` and `POST /v1/sms/signature/create`, then reference the template id when sending.
 - **Game Moderation SMS Alerts:** Sandbox/test numbers may work without it; production traffic will not.
+
+## Questions people ask
+
+**Is there an SDK I should install first?**  
+No. `src/game_moderation_alerts/infrai_sms.py` reaches `sms.send` over plain HTTP, which is why the whole setup is `python3` plus one environment variable. For a game moderation alerts example that is the entire dependency story.
